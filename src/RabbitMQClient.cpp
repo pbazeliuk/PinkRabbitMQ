@@ -214,16 +214,24 @@ void RabbitMQClient::unbindQueueImpl(Biterp::CallContext& ctx) {
 void RabbitMQClient::basicPublishImpl(Biterp::CallContext& ctx) {
 	checkConnection();
 
-	string exchange = ctx.stringParamUtf8();
-	string routingKey = ctx.stringParamUtf8();
-	string message = ctx.stringParamUtf8();
-	ctx.skipParam();
-	bool persistent = ctx.boolParam();
-	string propsJson = ctx.stringParamUtf8();
+	string exchange = ctx.stringParamUtf8(); // 1
+	string routingKey = ctx.stringParamUtf8(); // 2 
+	
+	tVariant* current = ctx.currentParam(); // 3
+	uint32_t messageSize = current->strLen;
+	char* message = ctx.blobParam();
+
+	ctx.skipParam(); // 4
+	bool persistent = ctx.boolParam(); // 5
+
+	current = ctx.currentParam();
+	uint32_t propsSize = current->strLen;
+	char* props = ctx.blobParam(); // 6
+	string propsJson(props, propsSize);
 
 	AMQP::Table args = headersFromJson(propsJson);
 
-	AMQP::Envelope envelope(message.c_str(), strlen(message.c_str()));
+	AMQP::Envelope envelope(message, messageSize);
 	if (!msgProps[CORRELATION_ID].empty()) envelope.setCorrelationID(msgProps[CORRELATION_ID]);
 	if (!msgProps[MESSAGE_ID].empty()) envelope.setMessageID(msgProps[MESSAGE_ID]);
 	if (!msgProps[TYPE_NAME].empty()) envelope.setTypeName(msgProps[TYPE_NAME]);

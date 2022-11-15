@@ -52,6 +52,15 @@ namespace Biterp {
             return result;
         }
 
+        char *blobParam() {
+            tVariant* param = currentParam();
+            if (param->vt == VTYPE_BLOB) {
+                index++;
+                return param->pstrVal;
+            }
+            throw TypeError(index, "BinaryData", param->vt);
+        }
+
         u16string stringParam(bool nullable = true) {
             tVariant *param = currentParam();
             if (param->vt == VTYPE_PWSTR) {
